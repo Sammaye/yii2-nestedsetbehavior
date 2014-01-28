@@ -1,6 +1,6 @@
 <?php
 
-namespace yii\components;
+namespace sammaye\extensions;
 
 use Yii;
 use yii\base\Behavior;
@@ -8,7 +8,7 @@ use yii\db\Exception;
 use yii\db\Expression;
 use yii\db\Query;
 
-class NestedSetTree extends Behavior
+class NestedSetBehavior extends Behavior
 {
 	public $hasManyRoots=false;
 	public $rootAttribute='root';
