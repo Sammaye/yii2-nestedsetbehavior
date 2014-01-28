@@ -1,0 +1,20 @@
+{
+    "name": "sammaye/nestedsetbehavior",
+    "description": "Yii2 port of the famous NestedSetBehaviour",
+    "keywords": ["yii", "framework", "nested", "set", "tree", "trees"],
+    "homepage": "http://www.yiiframework.com/",
+    "type": "extension",
+    "license": "BSD-3-Clause",
+    "authors": [
+        {
+            "name": "Sam Millman",
+            "homepage": "http://sammaye.wordpress.com/",
+        },
+    ],
+    "require": {
+        "php": ">=5.4.0",
+    },
+    "autoload": {
+        "psr-4": { "sammaye\\nestedsetbehavior\": "" }
+    }
+}
