@@ -8,11 +8,11 @@
     "authors": [
         {
             "name": "Sam Millman",
-            "homepage": "http://sammaye.wordpress.com/",
-        },
+            "homepage": "http://sammaye.wordpress.com/"
+        }
     ],
     "require": {
-        "php": ">=5.4.0",
+        "php": ">=5.4.0"
     },
     "autoload": {
         "psr-4": { "sammaye\\extensions\\": "" }
