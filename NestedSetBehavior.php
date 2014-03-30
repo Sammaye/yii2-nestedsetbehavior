@@ -75,6 +75,7 @@ class NestedSetBehavior extends Behavior
 	 */
 	public function ancestors($depth=null)
 	{
+		$owner = $this->owner;
 		$query = $this->owner->createQuery()
 			->andWhere("[[$this->leftAttribute]] < :left", [':left' => $owner->{$this->leftAttribute}])
 			->andWhere("[[$this->rightAttribute]] > :right", [':right' => $owner->{$this->rightAttribute}])
