@@ -44,7 +44,7 @@ class NestedSetBehavior extends Behavior
 	{
 		/** @var \yii\db\ActiveRecord */
 		$owner = $this->owner;
-		$query = $owner->createQuery()
+		$query = $owner->find()
 			->andWhere("[[$this->leftAttribute]] > :left", [':left' => $owner->{$this->leftAttribute}])
 			->andWhere("[[$this->rightAttribute]] < :right", [':right' => $owner->{$this->rightAttribute}])
 			->orderBy([$this->leftAttribute => SORT_ASC]);
@@ -75,18 +75,17 @@ class NestedSetBehavior extends Behavior
 	 */
 	public function ancestors($depth=null)
 	{
-		$owner = $this->owner;
-		$query = $this->owner->createQuery()
-			->andWhere("[[$this->leftAttribute]] < :left", [':left' => $owner->{$this->leftAttribute}])
-			->andWhere("[[$this->rightAttribute]] > :right", [':right' => $owner->{$this->rightAttribute}])
+		$query = $this->owner->find()
+			->andWhere("[[$this->leftAttribute]] < :left", [':left' => $this->owner->{$this->leftAttribute}])
+			->andWhere("[[$this->rightAttribute]] > :right", [':right' => $this->owner->{$this->rightAttribute}])
 			->orderBy([$this->leftAttribute => SORT_ASC]);
 
 		if($depth !== null){
-			$query->andWhere($this->levelAttribute . '>= :depth', [':depth' => $owner->{$this->levelAttribute} - $depth]);
+			$query->andWhere($this->levelAttribute . '>= :depth', [':depth' => $this->owner->{$this->levelAttribute} - $depth]);
 		}
 
 		if($this->hasManyRoots){
-			$query->andWhere("$this->rootAttribute = :root", [':root' => $owner->{$this->rootAttribute}]);
+			$query->andWhere("$this->rootAttribute = :root", [':root' => $this->owner->{$this->rootAttribute}]);
 		}
 		return $query;
 	}
@@ -97,7 +96,7 @@ class NestedSetBehavior extends Behavior
 	 */
 	public function roots()
 	{
-		return $query = $this->owner->createQuery()->andWhere("[[$this->leftAttribute]] = 1");
+		return $query = $this->owner->find()->andWhere("[[$this->leftAttribute]] = 1");
 	}
 
 	/**
@@ -107,7 +106,7 @@ class NestedSetBehavior extends Behavior
 	public function parent()
 	{
 		$owner = $this->owner;
-		$query = $owner->createQuery()
+		$query = $owner->find()
 			->andWhere("[[$this->leftAttribute]] < :left", [':left' => $owner->{$this->leftAttribute}])
 			->andWhere("[[$this->rightAttribute]] > :right", [':right' => $owner->{$this->rightAttribute}])
 			->orderBy([$this->rightAttribute => SORT_ASC]);
@@ -125,7 +124,7 @@ class NestedSetBehavior extends Behavior
 	public function prev()
 	{
 		$owner = $this->owner;
-		$query = $owner->createQuery()
+		$query = $owner->find()
 			->andWhere("[[$this->rightAttribute]] = :right", [':right' => $owner->{$this->leftAttribute} - 1]);
 
 		if($this->hasManyRoots){
@@ -141,7 +140,7 @@ class NestedSetBehavior extends Behavior
 	public function next()
 	{
 		$owner = $this->owner;
-		$query = $owner->createQuery()
+		$query = $owner->find()
 			->andWhere("[[$this->leftAttribute]] = :left", [':left' => $owner->{$this->rightAttribute} + 1]);
 
 		if($this->hasManyRoots){
@@ -506,7 +505,7 @@ class NestedSetBehavior extends Behavior
 	 * Handle 'afterFind' event of the owner.
 	 * @param CEvent $event event parameter.
 	 */
-	public function afterFind($event)
+	public function afterfind($event)
 	{
 		$owner = $this->owner;
 		self::$_cached[get_class($owner)][$this->_id = self::$_c++] = $owner;
@@ -550,6 +549,7 @@ class NestedSetBehavior extends Behavior
 		$db = $owner->getDb();
 
 		foreach(array($this->leftAttribute, $this->rightAttribute) as $attribute){
+			//var_dump($query); exit();
 			$owner->updateAll(
 				[$attribute => new Expression($db->quoteColumnName($attribute) . sprintf('%+d', $delta))],
 				['and', "[[$attribute]] >= :key", "[[$this->rootAttribute]] = :root"],
