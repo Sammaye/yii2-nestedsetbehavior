@@ -16,24 +16,24 @@ class NestedSetBehavior extends Behavior
 	public $leftAttribute='lft';
 	public $rightAttribute='rgt';
 	public $levelAttribute='level';
-
+	
 	private $_ignoreEvent = false;
 	private $_deleted = false;
 	private $_id;
-
+	
 	private static $_cached;
 	private static $_c = 0;
-
+	
 	public function events()
 	{
 		return [
-		ActiveRecord::EVENT_INIT => 'afterConstruct',
-		ActiveRecord::EVENT_AFTER_FIND => 'afterFind',
-		ActiveRecord::EVENT_BEFORE_INSERT => 'beforeSave',
-		ActiveRecord::EVENT_BEFORE_UPDATE => 'beforeSave',
-		ActiveRecord::EVENT_BEFORE_DELETE => 'beforeDelete',
+			ActiveRecord::EVENT_INIT => 'afterConstruct',
+			ActiveRecord::EVENT_AFTER_FIND => 'afterFind',
+			ActiveRecord::EVENT_BEFORE_INSERT => 'beforeSave',
+			ActiveRecord::EVENT_BEFORE_UPDATE => 'beforeSave',
+			ActiveRecord::EVENT_BEFORE_DELETE => 'beforeDelete',
 		];
-	}
+	}	
 
 	/**
 	 * Named scope. Gets descendants for node.
@@ -44,11 +44,11 @@ class NestedSetBehavior extends Behavior
 	{
 		/** @var \yii\db\ActiveRecord */
 		$owner = $this->owner;
-		$query = $owner->find()
-		->andWhere("[[$this->leftAttribute]] > :left", [':left' => $owner->{$this->leftAttribute}])
-		->andWhere("[[$this->rightAttribute]] < :right", [':right' => $owner->{$this->rightAttribute}])
-		->orderBy([$this->leftAttribute => SORT_ASC]);
-
+		$query = $owner->createQuery()
+			->andWhere("[[$this->leftAttribute]] > :left", [':left' => $owner->{$this->leftAttribute}])
+			->andWhere("[[$this->rightAttribute]] < :right", [':right' => $owner->{$this->rightAttribute}])
+			->orderBy([$this->leftAttribute => SORT_ASC]);
+		
 		if($depth !== null){
 			$query->andWhere($this->levelAttribute . '<= :depth', [':depth' => $owner->{$this->levelAttribute} + $depth]);
 		}
@@ -75,17 +75,18 @@ class NestedSetBehavior extends Behavior
 	 */
 	public function ancestors($depth=null)
 	{
-		$query = $this->owner->find()
-		->andWhere("[[$this->leftAttribute]] < :left", [':left' => $this->owner->{$this->leftAttribute}])
-		->andWhere("[[$this->rightAttribute]] > :right", [':right' => $this->owner->{$this->rightAttribute}])
-		->orderBy([$this->leftAttribute => SORT_ASC]);
+		$owner = $this->owner;
+		$query = $this->owner->createQuery()
+			->andWhere("[[$this->leftAttribute]] < :left", [':left' => $owner->{$this->leftAttribute}])
+			->andWhere("[[$this->rightAttribute]] > :right", [':right' => $owner->{$this->rightAttribute}])
+			->orderBy([$this->leftAttribute => SORT_ASC]);
 
 		if($depth !== null){
-			$query->andWhere($this->levelAttribute . '>= :depth', [':depth' => $this->owner->{$this->levelAttribute} - $depth]);
+			$query->andWhere($this->levelAttribute . '>= :depth', [':depth' => $owner->{$this->levelAttribute} - $depth]);
 		}
 
 		if($this->hasManyRoots){
-			$query->andWhere("$this->rootAttribute = :root", [':root' => $this->owner->{$this->rootAttribute}]);
+			$query->andWhere("$this->rootAttribute = :root", [':root' => $owner->{$this->rootAttribute}]);
 		}
 		return $query;
 	}
@@ -96,7 +97,7 @@ class NestedSetBehavior extends Behavior
 	 */
 	public function roots()
 	{
-		return $query = $this->owner->find()->andWhere("[[$this->leftAttribute]] = 1");
+		return $query = $this->owner->createQuery()->andWhere("[[$this->leftAttribute]] = 1");
 	}
 
 	/**
@@ -106,10 +107,10 @@ class NestedSetBehavior extends Behavior
 	public function parent()
 	{
 		$owner = $this->owner;
-		$query = $owner->find()
-		->andWhere("[[$this->leftAttribute]] < :left", [':left' => $owner->{$this->leftAttribute}])
-		->andWhere("[[$this->rightAttribute]] > :right", [':right' => $owner->{$this->rightAttribute}])
-		->orderBy([$this->rightAttribute => SORT_ASC]);
+		$query = $owner->createQuery()
+			->andWhere("[[$this->leftAttribute]] < :left", [':left' => $owner->{$this->leftAttribute}])
+			->andWhere("[[$this->rightAttribute]] > :right", [':right' => $owner->{$this->rightAttribute}])
+			->orderBy([$this->rightAttribute => SORT_ASC]);
 
 		if($this->hasManyRoots){
 			$query->andWhere("$this->rootAttribute = :root", [':root' => $owner->{$this->rootAttribute}]);
@@ -124,8 +125,8 @@ class NestedSetBehavior extends Behavior
 	public function prev()
 	{
 		$owner = $this->owner;
-		$query = $owner->find()
-		->andWhere("[[$this->rightAttribute]] = :right", [':right' => $owner->{$this->leftAttribute} - 1]);
+		$query = $owner->createQuery()
+			->andWhere("[[$this->rightAttribute]] = :right", [':right' => $owner->{$this->leftAttribute} - 1]);
 
 		if($this->hasManyRoots){
 			$query->andWhere("$this->rootAttribute = :root", [':root' => $owner->{$this->rootAttribute}]);
@@ -140,8 +141,8 @@ class NestedSetBehavior extends Behavior
 	public function next()
 	{
 		$owner = $this->owner;
-		$query = $owner->find()
-		->andWhere("[[$this->leftAttribute]] = :left", [':left' => $owner->{$this->rightAttribute} + 1]);
+		$query = $owner->createQuery()
+			->andWhere("[[$this->leftAttribute]] = :left", [':left' => $owner->{$this->rightAttribute} + 1]);
 
 		if($this->hasManyRoots){
 			$query->andWhere("$this->rootAttribute = :root", [':root' => $owner->{$this->rootAttribute}]);
@@ -216,7 +217,7 @@ class NestedSetBehavior extends Behavior
 			}else{
 				$query = new Query();
 				$query->andWhere("[[$this->leftAttribute]] >= :left", [':left' => $owner->{$this->leftAttribute}])
-				->andWhere("[[$this->rightAttribute]] <= :right", [':right' => $owner->{$this->rightAttribute}]);
+					->andWhere("[[$this->rightAttribute]] <= :right", [':right' => $owner->{$this->rightAttribute}]);
 
 				if($this->hasManyRoots){
 					$query->andWhere("$this->rootAttribute = :root", [':root' => $owner->{$this->rootAttribute}]);
@@ -405,22 +406,22 @@ class NestedSetBehavior extends Behavior
 			$delta = 1 - $left;
 
 			$owner->updateAll(
-					array(
-							$this->leftAttribute => new Expression($db->quoteColumnName($this->leftAttribute) . sprintf('%+d', $delta)),
-							$this->rightAttribute => new Expression($db->quoteColumnName($this->rightAttribute) . sprintf('%+d', $delta)),
-							$this->levelAttribute => new Expression($db->quoteColumnName($this->levelAttribute) . sprintf('%+d', $levelDelta)),
-							$this->rootAttribute => $owner->getPrimaryKey(),
-					),
-					[
+				array(
+					$this->leftAttribute => new Expression($db->quoteColumnName($this->leftAttribute) . sprintf('%+d', $delta)),
+					$this->rightAttribute => new Expression($db->quoteColumnName($this->rightAttribute) . sprintf('%+d', $delta)),
+					$this->levelAttribute => new Expression($db->quoteColumnName($this->levelAttribute) . sprintf('%+d', $levelDelta)),
+					$this->rootAttribute => $owner->getPrimaryKey(),
+				),
+				[
 					"[[$this->leftAttribute]] >= :left",
 					"[[$this->rightAttribute]] <= :right",
 					"[[$this->rootAttribute]] = :root"
-					],
-					[
+				],
+				[
 					':left' => $left,
 					':right' => $right,
 					':root' => $owner->{$this->rootAttribute}
-			]
+				]
 			);
 			$this->shiftLeftRight($right + 1, $left - $right - 1);
 
@@ -505,7 +506,7 @@ class NestedSetBehavior extends Behavior
 	 * Handle 'afterFind' event of the owner.
 	 * @param CEvent $event event parameter.
 	 */
-	public function afterfind($event)
+	public function afterFind($event)
 	{
 		$owner = $this->owner;
 		self::$_cached[get_class($owner)][$this->_id = self::$_c++] = $owner;
@@ -549,11 +550,10 @@ class NestedSetBehavior extends Behavior
 		$db = $owner->getDb();
 
 		foreach(array($this->leftAttribute, $this->rightAttribute) as $attribute){
-			//var_dump($query); exit();
 			$owner->updateAll(
-					[$attribute => new Expression($db->quoteColumnName($attribute) . sprintf('%+d', $delta))],
-					['and', "[[$attribute]] >= :key", "[[$this->rootAttribute]] = :root"],
-					[':key' => $key, ':root' => $owner->{$this->rootAttribute}]
+				[$attribute => new Expression($db->quoteColumnName($attribute) . sprintf('%+d', $delta))],
+				['and', "[[$attribute]] >= :key", "[[$this->rootAttribute]] = :root"],
+				[':key' => $key, ':root' => $owner->{$this->rootAttribute}]
 			);
 		}
 	}
@@ -742,31 +742,31 @@ class NestedSetBehavior extends Behavior
 			if($this->hasManyRoots && $owner->{$this->rootAttribute} !== $target->{$this->rootAttribute}){
 				foreach([$this->leftAttribute, $this->rightAttribute] as $attribute){
 					$owner->updateAll(
-							[$attribute => new Expression($db->quoteColumnName($attribute) . sprintf('%+d', $right - $left + 1))],
-							["[[$attribute]] >= :key", $this->rootAttribute . '= :root'],
-							[':key' => $key, ':root' => $target->{$this->rootAttribute}]
+						[$attribute => new Expression($db->quoteColumnName($attribute) . sprintf('%+d', $right - $left + 1))],
+						["[[$attribute]] >= :key", $this->rootAttribute . '= :root'],
+						[':key' => $key, ':root' => $target->{$this->rootAttribute}]
 					);
 				}
 
 				$delta = $key - $left;
 
 				$owner->updateAll(
-						[
+					[
 						$this->leftAttribute => new Expression($db->quoteColumnName($this->leftAttribute).sprintf('%+d',$delta)),
 						$this->rightAttribute => new Expression($db->quoteColumnName($this->rightAttribute).sprintf('%+d',$delta)),
 						$this->levelAttribute => new Expression($db->quoteColumnName($this->levelAttribute).sprintf('%+d',$levelDelta)),
 						$this->rootAttribute => $target->{$this->rootAttribute},
-						],
-						[
+					],
+					[
 						"[[$this->leftAttribute]] >= :left",
 						"[[$this->rightAttribute]] <= :right",
 						"[[$this->rootAttribute]] = :root"
-						],
-						[
+					],
+					[
 						':left' => $left,
 						':right' => $right,
 						':root' => $owner->{$this->rootAttribute}
-				]
+					]
 				);
 
 				$this->shiftLeftRight($right + 1, $left - $right - 1);
@@ -785,30 +785,30 @@ class NestedSetBehavior extends Behavior
 
 				$query = new Query();
 				$query->andWhere("[[$this->leftAttribute]] >= :left", [':left' => $left])
-				->andWhere("[[$this->rightAttribute]] <= :right", [':right' => $right]);
-
+					->andWhere("[[$this->rightAttribute]] <= :right", [':right' => $right]);
+				
 				if($this->hasManyRoots){
 					$query->andWhere("$this->rootAttribute = :root", [':root' => $owner->{$this->rootAttribute}]);
 				}
 
 				$owner->updateAll(
-						[$this->levelAttribute => new Expression($db->quoteColumnName($this->levelAttribute) . sprintf('%+d', $levelDelta))],
-						$query->where,
-						$query->params
+					[$this->levelAttribute => new Expression($db->quoteColumnName($this->levelAttribute) . sprintf('%+d', $levelDelta))],
+					$query->where,
+					$query->params
 				);
 
 				foreach([$this->leftAttribute, $this->rightAttribute] as $attribute){
 					$query = new Query();
 					$query->andWhere("[[$attribute]] >= :left", [':left' => $left])
-					->andWhere("[[$attribute]] <= :right", [':right' => $right]);
+						->andWhere("[[$attribute]] <= :right", [':right' => $right]);
 
 					if($this->hasManyRoots){
 						$query->andWhere("$this->rootAttribute = :root", [':root' => $owner->{$this->rootAttribute}]);
 					}
 					$owner->updateAll(
-							[$attribute => new Expression($db->quoteColumnName($attribute) . sprintf('%+d', $key - $left))],
-							$query->where,
-							$query->params
+						[$attribute => new Expression($db->quoteColumnName($attribute) . sprintf('%+d', $key - $left))],
+						$query->where,
+						$query->params
 					);
 				}
 				$this->shiftLeftRight($right + 1, -$delta);
