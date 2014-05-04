@@ -673,7 +673,7 @@ class NestedSetBehavior extends Behavior
 				}
 
 				$pk = $owner->{$this->rootAttribute} = $owner->getPrimaryKey();
-				$owner->updateAll([$owner->primaryKey() => $pk], [$this->rootAttribute => $pk]);
+				$owner->updateAll([$this->rootAttribute => $pk], [$owner->primaryKey()[0] => $pk]);
 
 				if($extTransFlag === null){
 					$transaction->commit();
