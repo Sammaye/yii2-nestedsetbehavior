@@ -168,7 +168,7 @@ class NestedSetBehavior extends Behavior
 		}
 
 		$this->_ignoreEvent = true;
-		$result = $owner->update($attributes);
+		$result = $owner->update();
 		$this->_ignoreEvent = false;
 
 		return $result;
@@ -412,6 +412,7 @@ class NestedSetBehavior extends Behavior
 					$this->rootAttribute => $owner->getPrimaryKey(),
 				),
 				[
+					"and",
 					"[[$this->leftAttribute]] >= :left",
 					"[[$this->rightAttribute]] <= :right",
 					"[[$this->rootAttribute]] = :root"
@@ -750,7 +751,7 @@ class NestedSetBehavior extends Behavior
 				foreach([$this->leftAttribute, $this->rightAttribute] as $attribute){
 					$owner->updateAll(
 						[$attribute => new Expression($db->quoteColumnName($attribute) . sprintf('%+d', $right - $left + 1))],
-						["[[$attribute]] >= :key", $this->rootAttribute . '= :root'],
+						['and', "[[$attribute]] >= :key", $this->rootAttribute . '= :root'],
 						[':key' => $key, ':root' => $target->{$this->rootAttribute}]
 					);
 				}
@@ -765,6 +766,7 @@ class NestedSetBehavior extends Behavior
 						$this->rootAttribute => $target->{$this->rootAttribute},
 					],
 					[
+						"and",
 						"[[$this->leftAttribute]] >= :left",
 						"[[$this->rightAttribute]] <= :right",
 						"[[$this->rootAttribute]] = :root"
