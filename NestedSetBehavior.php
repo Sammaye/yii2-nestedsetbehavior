@@ -162,16 +162,19 @@ class NestedSetBehavior extends Behavior
 		if($runValidation && !$owner->validate($attributes)){
 			return false;
 		}
-
 		if($owner->getIsNewRecord()){
 			return $this->makeRoot($attributes);
 		}
-
-		$this->_ignoreEvent = true;
-		$result = $owner->update();
-		$this->_ignoreEvent = false;
-
-		return $result;
+		if($owner->getDirtyAttributes()){
+			// If something has changed (not empty array) then we actually perform save else just 
+			// return true dammit.
+			$this->_ignoreEvent = true;
+			$result = $owner->update();
+			$this->_ignoreEvent = false;
+			return $result;
+		}else{
+			return true;
+		}
 	}
 
 	/**
